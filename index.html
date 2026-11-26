@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mathematics Visualizer V27</title>
+<style>
+:root{--bg:#f3f6fc;--card:#fff;--blue:#2857a4;--dark:#183b70;--ink:#17233d;--muted:#64748b;--line:#dce4f0}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:linear-gradient(120deg,#183b70,#315fa9);color:#fff;text-align:center;padding:22px 12px}header h1{margin:0 0 7px}header p{margin:0;color:#e0eaff}
+nav{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;background:#fff;padding:11px;position:sticky;top:0;z-index:5;box-shadow:0 2px 8px #0001}
+button{border:0;border-radius:7px;padding:10px 13px;background:var(--blue);color:#fff;font-weight:600;cursor:pointer}button:hover{filter:brightness(.93)}nav button{background:#edf2fa;color:#25416b}nav button.active{background:var(--dark);color:white}
+main{max-width:1500px;margin:20px auto;padding:0 14px}.module{display:none}.module.active{display:block}
+.layout{display:grid;grid-template-columns:minmax(270px,350px) minmax(0,1fr);gap:14px}.card{background:#fff;padding:18px;border:1px solid var(--line);border-radius:13px;margin-bottom:14px;box-shadow:0 3px 15px #0000000b;min-width:0}
+h2{margin:0 0 8px;color:#204b89;font-size:20px}h3{color:#365987;margin:15px 0 7px}.small{font-size:13px;color:var(--muted);line-height:1.5}
+.field{margin:10px 0}label{display:block;font-size:13px;font-weight:bold;margin-bottom:5px}input,select{width:100%;padding:10px;border:1px solid #cbd4e3;border-radius:7px;font-size:14px;background:#fff;color:var(--ink)}input[type=range]{padding:0}
+.row{display:flex;gap:9px;flex-wrap:wrap}.row>*{flex:1;min-width:90px}.actions,.graph-tools{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}.secondary{background:#e8effc;color:#244c88}.neutral{background:#edf0f5;color:#334155}
+.result{background:#edf3ff;padding:11px;border-radius:8px;margin:10px 0;line-height:1.65;overflow-wrap:anywhere}.error{background:#fff0f0;color:#a52222}.good{background:#eaf8ef;color:#176b3a}
+.graph{width:100%;height:auto;display:block;background:#fff;border:1px solid var(--line);border-radius:9px;touch-action:none;cursor:grab}.graph:active{cursor:grabbing}
+.graph-tools button{font-size:12px;padding:7px 10px}.stat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.stat{padding:9px;background:#f7f9fc;border:1px solid var(--line);border-radius:8px}.stat small{display:block;color:var(--muted)}.stat b{font-size:14px;overflow-wrap:anywhere}
+.expr-list{display:flex;flex-direction:column;gap:7px}.expr-row{display:grid;grid-template-columns:8px minmax(0,1fr) 34px;gap:7px;align-items:center}.swatch{height:27px;border-radius:6px}.expr-row button{padding:7px}.slider-row{display:grid;grid-template-columns:22px minmax(0,1fr) 50px;gap:7px;align-items:center;font-size:13px;margin:8px 0}.slider-row input{padding:0}.table-wrap{overflow:auto;max-height:210px}.table{border-collapse:collapse;width:100%;font-size:13px}.table th,.table td{padding:7px;border-bottom:1px solid var(--line);text-align:right}.table th:first-child,.table td:first-child{text-align:left}
+#threeCanvas{width:100%;height:410px;display:block;background:#f8faff;border:1px solid var(--line);border-radius:9px;touch-action:none}
+footer{text-align:center;padding:20px;color:var(--muted);font-size:12px}
+@media(max-width:850px){.layout{grid-template-columns:1fr}nav{position:static}}@media(max-width:500px){.card{padding:13px}header h1{font-size:22px}}
+</style>
+</head>
+<body>
+<header><h1>∑ Mathematics Visualizer</h1><p>Explore Mathematics Through Interactive Learning</p></header>
+<nav>
+<button class="active" data-page="function">Function Graph</button><button data-page="coordinate">Coordinate Geometry</button><button data-page="trig">Trigonometry</button><button data-page="algebra">Algebra</button><button data-page="calculus">Calculus</button><button data-page="plotter">2D Plotter</button><button data-page="threeD">3D Visualizer</button>
+</nav>
+<main>
+<section id="function" class="module active"><div class="layout">
+<div class="card"><h2>1. Advanced Function Graph</h2><p class="small">Plot multiple functions together. Supports standard operator precedence, powers, implicit multiplication (2x), pi, e, and sin/cos/tan/sqrt/abs/log/ln/exp. Use x and parameters a, b, c.</p>
+<div id="functionExpressions" class="expr-list"></div><div class="actions"><button id="addExpression" class="secondary">+ Add function</button><button id="plotFunctions">Plot all</button></div>
+<div class="field"><label>Evaluate at x</label><input id="functionX" type="number" value="2" step="any"></div><button id="evaluateFunction" class="secondary">Show point</button><div id="functionMessage" class="result">Ready to plot functions.</div>
+<h3>Interactive parameters</h3><p class="small">Change a, b and c to update expressions that use these parameters.</p>
+<div id="parameterSliders">
+<div class="slider-row"><b>a</b><input id="paramA" type="range" min="-5" max="5" step=".1" value="1"><output id="paramAVal">1</output></div>
+<div class="slider-row"><b>b</b><input id="paramB" type="range" min="-10" max="10" step=".1" value="0"><output id="paramBVal">0</output></div>
+<div class="slider-row"><b>c</b><input id="paramC" type="range" min="-10" max="10" step=".1" value="0"><output id="paramCVal">0</output></div></div>
+<h3>Function value table</h3><div class="table-wrap"><table class="table"><thead><tr><th>x</th><th>f(x)</th></tr></thead><tbody id="valueTable"></tbody></table></div>
+</div>
+<div class="card"><div class="graph-head"><h2>Function Plot</h2></div><svg id="functionGraph" class="graph" viewBox="0 0 800 520"></svg><div class="graph-tools" data-zoom-for="functionGraph"><button class="secondary" data-zoom="in">Zoom +</button><button class="secondary" data-zoom="out">Zoom −</button><button class="neutral" data-zoom="reset">Reset</button></div><div class="stat-grid" id="functionAnalysis"></div><p class="small">Mouse wheel / trackpad to zoom · Drag to pan · Pinch on touch screens.</p></div>
+</div></section>
+
+<section id="coordinate" class="module"><div class="layout"><div class="card"><h2>2. Coordinate Geometry</h2><div class="row"><div class="field"><label>Point A: X</label><input id="x1" type="number" value="2"></div><div class="field"><label>Point A: Y</label><input id="y1" type="number" value="3"></div></div><div class="row"><div class="field"><label>Point B: X</label><input id="x2" type="number" value="5"></div><div class="field"><label>Point B: Y</label><input id="y2" type="number" value="7"></div></div><button id="coordinateCalc">Calculate & Draw</button><div id="coordinateResult" class="result"></div></div><div class="card"><h2>Coordinate Plane</h2><svg id="coordinateGraph" class="graph" viewBox="0 0 800 520"></svg><div class="graph-tools" data-zoom-for="coordinateGraph"><button class="secondary" data-zoom="in">Zoom +</button><button class="secondary" data-zoom="out">Zoom −</button><button class="neutral" data-zoom="reset">Reset</button></div></div></div></section>
+
+<section id="trig" class="module"><div class="layout"><div class="card"><h2>3. Trigonometry</h2><label>Angle (degrees)</label><input id="angle" type="number" value="45" min="0" max="360"><input id="angleRange" type="range" min="0" max="360" value="45"><button id="trigCalc">Calculate</button><div id="trigResult" class="result"></div></div><div class="card"><h2>Unit Circle</h2><svg id="unitCircle" class="graph" viewBox="0 0 800 520"></svg><div class="graph-tools" data-zoom-for="unitCircle"><button class="secondary" data-zoom="in">Zoom +</button><button class="secondary" data-zoom="out">Zoom −</button><button class="neutral" data-zoom="reset">Reset</button></div></div></div></section>
+
+<section id="algebra" class="module"><div class="layout"><div class="card"><h2>4. Algebra Solver</h2><p class="small">Solve ax² + bx + c = 0.</p><label>a</label><input id="qa" type="number" value="1"><label>b</label><input id="qb" type="number" value="-5"><label>c</label><input id="qc" type="number" value="6"><button id="algebraSolve">Solve</button><div id="algebraResult" class="result"></div></div><div class="card"><h2>Quadratic Graph</h2><svg id="algebraGraph" class="graph" viewBox="0 0 800 520"></svg><div class="graph-tools" data-zoom-for="algebraGraph"><button class="secondary" data-zoom="in">Zoom +</button><button class="secondary" data-zoom="out">Zoom −</button><button class="neutral" data-zoom="reset">Reset</button></div></div></div></section>
+
+<section id="calculus" class="module"><div class="layout"><div class="card"><h2>5. Advanced Calculus</h2><p class="small">Enter a function. Derivative is estimated numerically using a central difference.</p><label>Function f(x)</label><input id="calcExpr" value="x^2" spellcheck="false"><div class="field"><label>Point x₀</label><input id="calcX" type="number" value="2" step="any"></div><button id="calcDerivative">Find derivative & tangent</button><div id="derivativeResult" class="result"></div><hr><h3>Definite Integration</h3><div class="row"><div><label>Lower limit</label><input id="lower" type="number" value="0"></div><div><label>Upper limit</label><input id="upper" type="number" value="3"></div></div><button id="calcIntegral">Calculate & shade area</button><div id="integralResult" class="result"></div></div><div class="card"><h2>Calculus Graph</h2><svg id="calcGraph" class="graph" viewBox="0 0 800 520"></svg><div class="graph-tools" data-zoom-for="calcGraph"><button class="secondary" data-zoom="in">Zoom +</button><button class="secondary" data-zoom="out">Zoom −</button><button class="neutral" data-zoom="reset">Reset</button></div></div></div></section>
+
+<section id="plotter" class="module"><div class="layout"><div class="card"><h2>6. 2D Plotter</h2><p class="small">Choose a preset or enter your own function. Supports powers, implicit multiplication, pi, e, and common functions such as sin(x), sqrt(x), and ln(x).</p>
+<div class="field"><label>Preset functions</label><select id="plotPreset"><option value="x^2">y = x²</option><option value="2*x+1">y = 2x + 1</option><option value="sin(x)">y = sin(x)</option><option value="cos(x)">y = cos(x)</option><option value="tan(x)">y = tan(x)</option><option value="abs(x)">y = |x|</option><option value="x^3">y = x³</option><option value="sqrt(x)">y = √x</option><option value="exp(x)">y = eˣ</option><option value="log(x)">y = ln(x)</option></select></div>
+<div class="field"><label>Custom expression y = f(x)</label><input id="plotExpr" value="sin(x)" spellcheck="false"></div>
+<div class="field"><label>Graph range (±)</label><input id="plotRange" type="number" value="10" min="2" max="50" step="1"></div>
+<button id="plotDraw">Plot 2D Graph</button>
+<hr><h3>Evaluate a point</h3><div class="field"><label>Enter X value</label><input id="plotX" type="number" value="2" step="any"></div><button id="plotEvaluate" class="secondary">Show point on graph</button><div id="plotResult" class="result">Choose a function and plot it.</div></div>
+<div class="card"><h2>2D Graph</h2><svg id="plotGraph" class="graph" viewBox="0 0 800 520"></svg><div class="graph-tools" data-zoom-for="plotGraph"><button class="secondary" data-zoom="in">Zoom +</button><button class="secondary" data-zoom="out">Zoom −</button><button class="neutral" data-zoom="reset">Reset view</button></div><p class="small">Mouse wheel to zoom · Drag to pan · Use X value to mark a point.</p></div></div></section>
+
+<section id="threeD" class="module"><div class="card"><h2>7. 3D Graph Visualizer</h2><label>Select surface</label><select id="surfaceType"><option value="paraboloid">z = x² + y²</option><option value="saddle">z = x² − y²</option><option value="wave">z = sin(√(x² + y²))</option><option value="plane">z = x + y</option></select><div class="actions"><button id="reset3D" class="secondary">Reset view</button><button id="zoom3DIn">Zoom +</button><button id="zoom3DOut">Zoom −</button></div><label>Surface detail</label><select id="surfaceDetail"><option value="18">Low – faster</option><option value="30" selected>Medium – balanced</option><option value="42">High – detailed</option></select><canvas id="threeCanvas" width="900" height="550"></canvas><p class="small">Drag to rotate · Scroll or buttons to zoom. Higher detail may use more processing power.</p></div></section>
+</main><footer>Mathematics Visualizer · HTML, CSS & JavaScript · V27</footer>
+
+<script>
+'use strict';
+const $=id=>document.getElementById(id),fmt=n=>Number.isFinite(n)?Number(n.toFixed(5)).toString():'Undefined';
+const COLORS=['#2563eb','#dc3b52','#15965a','#9254de','#d18a16'];
+function msg(id,t,bad=false){$(id).textContent=t;$(id).classList.toggle('error',bad);$(id).classList.toggle('good',!bad)}
+function number(id){let s=$(id).value.trim();if(!s)throw Error('Enter a value.');let n=Number(s);if(!Number.isFinite(n))throw Error('Enter a valid number.');return n}
+
+/* Robust mathematical expression parser: no eval() or Function().
+   Supports standard precedence, right-associative powers, implicit multiplication,
+   constants, and common functions. */
+function compile(source,params={a:1,b:0,c:0}){
+ const s=String(source).toLowerCase().replace(/\s+/g,'').replace(/π/g,'pi');
+ if(!s||s.length>160)throw Error('Enter a valid expression (maximum 160 characters).');
+ const tokenPattern=/(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?|[a-z]+|[()+\-*/^]/g;
+ const tokens=s.match(tokenPattern);
+ if(!tokens||tokens.join('')!==s)throw Error('Unsupported character in expression.');
+ const functions={sin:Math.sin,cos:Math.cos,tan:Math.tan,sqrt:Math.sqrt,abs:Math.abs,log:Math.log,ln:Math.log,exp:Math.exp};
+ const startsPrimary=t=>t!==undefined&&(t==='('||/^(?:\d|\.)/.test(t)||/^[a-z]+$/.test(t));
+ return x=>{
+  let i=0;
+  const peek=()=>tokens[i];
+  const take=()=>tokens[i++];
+  function primary(){
+   const t=take();
+   if(t===undefined)throw Error('Incomplete expression.');
+   if(t==='('){const v=add();if(take()!==')')throw Error('Missing closing parenthesis.');return v;}
+   if(/^(?:\d|\.)/.test(t))return Number(t);
+   if(Object.prototype.hasOwnProperty.call(functions,t)){
+    if(take()!=='(')throw Error(t+'() requires parentheses, e.g. '+t+'(x).');
+    const v=add();if(take()!==')')throw Error('Missing closing parenthesis in '+t+'().');
+    return functions[t](v);
+   }
+   if(t==='x')return x;
+   if(t==='pi')return Math.PI;
+   if(t==='e')return Math.E;
+   if(t==='a'||t==='b'||t==='c')return Number(params[t]);
+   throw Error('Unknown term: '+t+'. Use x, a, b, c, pi, e, or a supported function.');
+  }
+  // Powers bind more tightly than a leading sign and associate right-to-left.
+  function power(){let v=primary();if(peek()==='^'){take();v=Math.pow(v,unary());}return v;}
+  function unary(){if(peek()==='+'){take();return unary();}if(peek()==='-'){take();return -unary();}return power();}
+  // Multiplication may be explicit (2*x) or implicit (2x, 2(x+1), (x+1)(x-1)).
+  function multiply(){let v=unary();while(true){const t=peek();if(t==='*'||t==='/'){take();const w=unary();v=t==='*'?v*w:v/w;}else if(startsPrimary(t)){v*=unary();}else break;}return v;}
+  function add(){let v=multiply();while(peek()==='+'||peek()==='-'){const op=take(),w=multiply();v=op==='+'?v+w:v-w;}return v;}
+  const result=add();
+  if(i!==tokens.length)throw Error('Unexpected term: '+peek());
+  return result;
+ };
+}
+/* Common coordinate renderer. scale = visible half-range in world units. */
+const views={};
+function view(id){return views[id]||(views[id]={scale:id==='unitCircle'?1.5:10,cx:0,cy:0})}
+function nice(raw){let p=10**Math.floor(Math.log10(Math.max(raw,1e-8))),q=raw/p;return(q<1.5?1:q<3.5?2:q<7.5?5:10)*p}
+function base(id){
+ let W=800,H=520,v=view(id),sx=W/(2*v.scale),sy=H/(2*v.scale),ox=W/2-v.cx*sx,oy=H/2+v.cy*sy,step=nice(65/Math.min(sx,sy)),s='';
+ let xmin=(-ox/sx),xmax=(W-ox)/sx,ymin=(oy-H)/sy,ymax=oy/sy;
+ for(let x=Math.ceil(xmin/step)*step,k=0;x<=xmax&&k++<300;x+=step){let px=ox+x*sx;s+=`<line x1="${px}" y1="0" x2="${px}" y2="${H}" stroke="#e7edf5"/>`;if(Math.abs(x)>1e-9)s+=`<text x="${px}" y="${Math.max(13,Math.min(H-5,oy+16))}" text-anchor="middle" font-size="12" fill="#596b84">${fmt(x)}</text>`}
+ for(let y=Math.ceil(ymin/step)*step,k=0;y<=ymax&&k++<300;y+=step){let py=oy-y*sy;s+=`<line x1="0" y1="${py}" x2="${W}" y2="${py}" stroke="#e7edf5"/>`;if(Math.abs(y)>1e-9)s+=`<text x="${Math.max(35,Math.min(W-8,ox-8))}" y="${py+4}" text-anchor="end" font-size="12" fill="#596b84">${fmt(y)}</text>`}
+ s+=`<line x1="0" y1="${oy}" x2="${W}" y2="${oy}" stroke="#344054" stroke-width="2"/><line x1="${ox}" y1="0" x2="${ox}" y2="${H}" stroke="#344054" stroke-width="2"/><text x="${W-20}" y="${Math.max(15,Math.min(H-5,oy-8))}" font-size="13" fill="#344054">x</text><text x="${Math.min(W-18,ox+9)}" y="16" font-size="13" fill="#344054">y</text>`;
+ return {s,W,H,sx,sy,ox,oy,v};
+}
+function pathFor(g,f,color,width=2.7){
+ let d='',parts=[],last=null;
+ const flush=()=>{if(d)parts.push(`<path d="${d}" fill="none" stroke="${color}" stroke-width="${width}" stroke-linecap="round" vector-effect="non-scaling-stroke"/>`);d='';last=null};
+ for(let px=0;px<=g.W;px+=1){let x=(px-g.ox)/g.sx,y;try{y=f(x)}catch(e){y=NaN}let py=g.oy-y*g.sy;
+  if(!Number.isFinite(y)||!Number.isFinite(py)||Math.abs(py)>g.H*7||(last&&Math.abs(py-last)>g.H*.65)){flush();if(!Number.isFinite(y)||!Number.isFinite(py)||Math.abs(py)>g.H*7)continue}
+  d+=(d?' L ':'M ')+px.toFixed(2)+' '+py.toFixed(2);last=py;
+ }flush();return parts.join('');
+}
+function render(id,functions=[],extras=''){
+ let g=base(id),s=g.s;
+ functions.forEach(o=>s+=pathFor(g,o.fn,o.color||'#2857a4'));
+ $(id).innerHTML=s+extras;
+}
+function redraw(id){if(id==='functionGraph')plotFunctions();if(id==='coordinateGraph')coordinate();if(id==='unitCircle')trig();if(id==='algebraGraph')solveAlgebra();if(id==='calcGraph')drawCalculus();if(id==='plotGraph')plotCustom()}
+function zoom(id,factor,clientX,clientY){
+ let svg=$(id),r=svg.getBoundingClientRect(),px=(clientX-r.left)*800/r.width,py=(clientY-r.top)*520/r.height,v=view(id),old=v.scale,next=Math.max(.0005,Math.min(100000,old/factor));
+ let wx=v.cx+(px-400)*2*old/800,wy=v.cy+(260-py)*2*old/520;
+ v.scale=next;v.cx=wx-(px-400)*2*next/800;v.cy=wy-(260-py)*2*next/520;redraw(id);
+}
+function enableZoom(id){
+ let svg=$(id),drag=null,pointers=new Map();
+ svg.addEventListener('wheel',e=>{e.preventDefault();zoom(id,e.deltaY<0?1.18:1/1.18,e.clientX,e.clientY)},{passive:false});
+ svg.addEventListener('pointerdown',e=>{svg.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pointers.size===1)drag={x:e.clientX,y:e.clientY,cx:view(id).cx,cy:view(id).cy};});
+ svg.addEventListener('pointermove',e=>{if(!pointers.has(e.pointerId))return;pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});let r=svg.getBoundingClientRect(),v=view(id);
+  if(pointers.size===2){let p=[...pointers.values()],dist=Math.max(1,Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y));let mid={x:(p[0].x+p[1].x)/2,y:(p[0].y+p[1].y)/2};if(!svg._pinch)svg._pinch={dist};else{zoom(id,svg._pinch.dist/dist,vMidX(mid,r),vMidY(mid,r));svg._pinch={dist};}}
+  else if(drag){v.cx=drag.cx-(e.clientX-drag.x)*2*v.scale/r.width;v.cy=drag.cy+(e.clientY-drag.y)*2*v.scale/r.height;redraw(id)}
+ });
+ const stop=e=>{pointers.delete(e.pointerId);drag=null;svg._pinch=null;if(pointers.size===1){let p=[...pointers.values()][0];drag={x:p.x,y:p.y,cx:view(id).cx,cy:view(id).cy}}};['pointerup','pointercancel','lostpointercapture'].forEach(k=>svg.addEventListener(k,stop));
+}
+function vMidX(p,r){return p.x}function vMidY(p,r){return p.y}
+document.querySelectorAll('.graph-tools').forEach(box=>box.querySelectorAll('button').forEach(b=>b.onclick=()=>{let id=box.dataset.zoomFor;if(b.dataset.zoom==='reset'){views[id]={scale:id==='unitCircle'?1.5:10,cx:0,cy:0};redraw(id)}else{let r=$(id).getBoundingClientRect();zoom(id,b.dataset.zoom==='in'?1.25:.8,r.left+r.width/2,r.top+r.height/2)}}));
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.module').forEach(m=>m.classList.toggle('active',m.id===b.dataset.page));document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x===b));redraw(b.dataset.page==='function'?'functionGraph':b.dataset.page==='coordinate'?'coordinateGraph':b.dataset.page==='trig'?'unitCircle':b.dataset.page==='algebra'?'algebraGraph':b.dataset.page==='calculus'?'calcGraph':b.dataset.page==='plotter'?'plotGraph':'')});
+
+/* Multi-expression function graph + parameter controls */
+let expressions=['x^2'];const param=()=>({a:+$('paramA').value,b:+$('paramB').value,c:+$('paramC').value});
+function makeExpressionRows(){
+ $('functionExpressions').innerHTML=expressions.map((e,i)=>`<div class="expr-row"><span class="swatch" style="background:${COLORS[i%COLORS.length]}"></span><input data-expr="${i}" value="${e.replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" aria-label="Function ${i+1}"><button class="neutral" data-remove="${i}" title="Remove">×</button></div>`).join('');
+ $('functionExpressions').querySelectorAll('input').forEach(inp=>inp.onchange=()=>{expressions[+inp.dataset.expr]=inp.value;plotFunctions()});
+ $('functionExpressions').querySelectorAll('[data-remove]').forEach(btn=>btn.onclick=()=>{if(expressions.length===1)return;expressions.splice(+btn.dataset.remove,1);makeExpressionRows();plotFunctions()});
+}
+function primaryFunction(){return compile(expressions[0]||'x^2',param())}
+function plotFunctions(){
+ try{let p=param(),fns=expressions.map((e,i)=>({fn:compile(e,p),color:COLORS[i%COLORS.length]}));render('functionGraph',fns);analyzeFunction(fns[0].fn);buildTable(fns[0].fn);msg('functionMessage','Plotted '+expressions.length+' function(s).')}
+ catch(e){msg('functionMessage',e.message,true)}
+}
+function analyzeFunction(f){
+ let roots=[],mins=[],maxs=[],lo=-10,hi=10,step=.04,prevX=lo,prev;
+ try{prev=f(prevX)}catch(e){prev=NaN}
+ for(let x=lo+step;x<=hi;x+=step){let y;try{y=f(x)}catch(e){y=NaN}
+  if(Number.isFinite(y)&&Number.isFinite(prev)){if(y===0||y*prev<0){let a=prevX,b=x,fa=prev;for(let k=0;k<35;k++){let m=(a+b)/2,fm=f(m);if(fa*fm<=0)b=m;else{a=m;fa=fm}}roots.push((a+b)/2)}}
+  prevX=x;prev=y;
+ }
+ let h=.001;for(let x=lo+h;x<hi-h;x+=.04){let d1=(f(x)-f(x-h))/h,d2=(f(x+h)-f(x))/h;if(Number.isFinite(d1)&&Number.isFinite(d2)&&d1*d2<0){let y=f(x);(d1<d2?mins:maxs).push([x,y])}}
+ $('functionAnalysis').innerHTML=[['Real x-intercepts (approx.)',roots.length?roots.slice(0,8).map(x=>fmt(x)).join(', '):'Not found in −10 to 10'],['Y-intercept',fmt(f(0))],['Local minima (approx.)',mins.length?mins.slice(0,4).map(p=>`(${fmt(p[0])}, ${fmt(p[1])})`).join(' '):'Not detected'],['Local maxima (approx.)',maxs.length?maxs.slice(0,4).map(p=>`(${fmt(p[0])}, ${fmt(p[1])})`).join(' '):'Not detected']].map(([k,v])=>`<div class="stat"><small>${k}</small><b>${v}</b></div>`).join('');
+}
+function buildTable(f){let rows='';for(let x=-5;x<=5;x++){let y;try{y=f(x)}catch(e){y=NaN}rows+=`<tr><td>${x}</td><td>${fmt(y)}</td></tr>`}$('valueTable').innerHTML=rows}
+$('addExpression').onclick=()=>{if(expressions.length>=5)return msg('functionMessage','Maximum 5 functions allowed.',true);expressions.push('cos(x)');makeExpressionRows();plotFunctions()};
+$('plotFunctions').onclick=plotFunctions;
+$('evaluateFunction').onclick=()=>{try{let x=number('functionX'),y=primaryFunction()(x);if(!Number.isFinite(y))throw Error('Function undefined at this x.');let g=base('functionGraph'),px=g.ox+x*g.sx,py=g.oy-y*g.sy;let extras=`<circle cx="${px}" cy="${py}" r="7" fill="#e53935" stroke="white" stroke-width="2"/><text x="${px+10}" y="${py-10}" fill="#b42318" font-size="14">(${fmt(x)}, ${fmt(y)})</text>`;let p=expressions.map((e,i)=>({fn:compile(e,param()),color:COLORS[i%COLORS.length]}));render('functionGraph',p,extras);msg('functionMessage',`f(${fmt(x)}) = ${fmt(y)}`)}catch(e){msg('functionMessage',e.message,true)}};
+['paramA','paramB','paramC'].forEach(id=>$(id).oninput=()=>{$(id+'Val').textContent=$(id).value;plotFunctions()});
+
+/* Coordinate geometry */
+function coordinate(){try{let x1=number('x1'),y1=number('y1'),x2=number('x2'),y2=number('y2'),d=Math.hypot(x2-x1,y2-y1),mx=(x1+x2)/2,my=(y1+y2)/2,m=x2===x1?'Undefined (vertical)':fmt((y2-y1)/(x2-x1)),g=base('coordinateGraph');let extra=`<line x1="${g.ox+x1*g.sx}" y1="${g.oy-y1*g.sy}" x2="${g.ox+x2*g.sx}" y2="${g.oy-y2*g.sy}" stroke="#2857a4" stroke-width="3"/><circle cx="${g.ox+x1*g.sx}" cy="${g.oy-y1*g.sy}" r="7" fill="#dc3b52"/><circle cx="${g.ox+x2*g.sx}" cy="${g.oy-y2*g.sy}" r="7" fill="#15965a"/><text x="${g.ox+x1*g.sx+9}" y="${g.oy-y1*g.sy-9}">A</text><text x="${g.ox+x2*g.sx+9}" y="${g.oy-y2*g.sy-9}">B</text><circle cx="${g.ox+mx*g.sx}" cy="${g.oy-my*g.sy}" r="5" fill="#d18a16"/>`;render('coordinateGraph',[],extra);msg('coordinateResult',`Distance = ${fmt(d)} | Midpoint = (${fmt(mx)}, ${fmt(my)}) | Slope = ${m}`)}catch(e){msg('coordinateResult',e.message,true)}}
+$('coordinateCalc').onclick=coordinate;['x1','y1','x2','y2'].forEach(id=>$(id).oninput=coordinate);
+
+/* Trigonometry */
+function trig(){try{let deg=number('angle');if(deg<0||deg>360)throw Error('Angle must be from 0° to 360°.');$('angleRange').value=deg;let r=deg*Math.PI/180,sn=Math.sin(r),cs=Math.cos(r),g=base('unitCircle'),R=Math.min(g.sx,g.sy),cx=g.ox,cy=g.oy,px=cx+R*cs,py=cy-R*sn;let extra=`<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#2857a4" stroke-width="2"/><line x1="${cx}" y1="${cy}" x2="${px}" y2="${py}" stroke="#dc3b52" stroke-width="3"/><line x1="${px}" y1="${py}" x2="${px}" y2="${cy}" stroke="#15965a" stroke-dasharray="5 4"/><circle cx="${px}" cy="${py}" r="6" fill="#dc3b52"/>`;render('unitCircle',[],extra);msg('trigResult',`sin θ = ${fmt(sn)} | cos θ = ${fmt(cs)} | tan θ = ${Math.abs(cs)<1e-10?'Undefined':fmt(sn/cs)} | Radians = ${fmt(r)}`)}catch(e){msg('trigResult',e.message,true)}}
+$('trigCalc').onclick=trig;$('angle').oninput=trig;$('angleRange').oninput=()=>{$('angle').value=$('angleRange').value;trig()};
+
+/* Quadratic algebra */
+function solveAlgebra(){try{let a=number('qa'),b=number('qb'),c=number('qc');if(a===0&&b===0){msg('algebraResult',c===0?'Every real number is a solution.':'No solution.',true);return}let d=b*b-4*a*c,out;if(a===0)out='Linear root x = '+fmt(-c/b);else if(d>=0){let r1=(-b+Math.sqrt(d))/(2*a),r2=(-b-Math.sqrt(d))/(2*a);out=d===0?'Repeated root x = '+fmt(r1):`Real roots: x₁ = ${fmt(r1)}, x₂ = ${fmt(r2)}`}else out=`Complex roots: ${fmt(-b/(2*a))} ± ${fmt(Math.sqrt(-d)/(2*Math.abs(a)))}i`;msg('algebraResult',out);render('algebraGraph',[{fn:x=>a*x*x+b*x+c,color:'#9254de'}])}catch(e){msg('algebraResult',e.message,true)}}
+$('algebraSolve').onclick=solveAlgebra;['qa','qb','qc'].forEach(id=>$(id).oninput=solveAlgebra);
+
+/* Calculus: numerical derivative, tangent, Simpson integration + shaded region */
+let calcExtras='';
+function drawCalculus(){try{let f=compile($('calcExpr').value,param());render('calcGraph',[{fn:f,color:'#2857a4'}],calcExtras)}catch(e){msg('derivativeResult',e.message,true)}}
+function derivative(){try{let f=compile($('calcExpr').value,param()),x=number('calcX'),h=1e-5*Math.max(1,Math.abs(x)),y=f(x),d=(f(x+h)-f(x-h))/(2*h);if(![y,d].every(Number.isFinite))throw Error('Function not defined near this x.');let tangent=t=>y+d*(t-x);calcExtras=`<path d="${pathFor(base('calcGraph'),tangent,'#dc3b52',2)}" fill="none"/><circle cx="${base('calcGraph').ox+x*base('calcGraph').sx}" cy="${base('calcGraph').oy-y*base('calcGraph').sy}" r="7" fill="#dc3b52"/>`;drawCalculus();msg('derivativeResult',`f(${fmt(x)}) = ${fmt(y)} | Numerical derivative f′(${fmt(x)}) ≈ ${fmt(d)} | Tangent: y − ${fmt(y)} = ${fmt(d)}(x − ${fmt(x)})`)}catch(e){msg('derivativeResult',e.message,true)}}
+function integral(){try{let f=compile($('calcExpr').value,param()),a=number('lower'),b=number('upper');if(Math.abs(a)>1e4||Math.abs(b)>1e4)throw Error('Use limits between −10000 and 10000.');let n=2000,h=(b-a)/n,sum=f(a)+f(b);for(let i=1;i<n;i++)sum+=(i%2?4:2)*f(a+i*h);let ans=sum*h/3;if(!Number.isFinite(ans))throw Error('Function is undefined within the selected interval.');let g=base('calcGraph'),pts=[];for(let i=0;i<=250;i++){let x=a+(b-a)*i/250,y=f(x);if(!Number.isFinite(y))throw Error('Function is undefined in the interval.');pts.push(`${g.ox+x*g.sx},${g.oy-y*g.sy}`)}let zeroY=g.oy;calcExtras=`<polygon points="${g.ox+a*g.sx},${zeroY} ${pts.join(' ')} ${g.ox+b*g.sx},${zeroY}" fill="#75b7f5" opacity=".3" stroke="#2580c8" stroke-width="1"/>`;drawCalculus();msg('integralResult',`Approximate definite integral from ${fmt(a)} to ${fmt(b)} = ${fmt(ans)} (Simpson’s rule, 2000 intervals).`)}catch(e){msg('integralResult',e.message,true)}}
+$('calcDerivative').onclick=derivative;$('calcIntegral').onclick=integral;$('calcExpr').onchange=()=>{calcExtras='';drawCalculus()};
+
+/* 2D plotter: presets, range control, and evaluated x-coordinate marker */
+let plotPointX=null;
+function plotCustom(){try{let f=compile($('plotExpr').value,param());let extras='';if(plotPointX!==null){let y=f(plotPointX),g=base('plotGraph'),px=g.ox+plotPointX*g.sx,py=g.oy-y*g.sy;if(Number.isFinite(y)&&Number.isFinite(px)&&Number.isFinite(py)&&px>=0&&px<=g.W&&py>=0&&py<=g.H){extras=`<line x1="${px}" y1="${g.oy}" x2="${px}" y2="${py}" stroke="#dc3b52" stroke-dasharray="5 4"/><circle cx="${px}" cy="${py}" r="7" fill="#dc3b52" stroke="white" stroke-width="2"/><text x="${Math.min(px+10,g.W-125)}" y="${Math.max(18,py-10)}" fill="#b42318" font-size="14">(${fmt(plotPointX)}, ${fmt(y)})</text>`}}render('plotGraph',[{fn:f,color:'#15965a'}],extras);msg('plotResult','Plotted y = '+$('plotExpr').value)}catch(e){msg('plotResult',e.message,true)}}
+function evaluatePlotPoint(){try{let x=number('plotX'),f=compile($('plotExpr').value,param()),y=f(x);if(!Number.isFinite(y))throw Error('Function is undefined at this X value.');plotPointX=x;plotCustom();msg('plotResult',`For x = ${fmt(x)}, y = ${fmt(y)}. Point (${fmt(x)}, ${fmt(y)}) marked on graph.`)}catch(e){msg('plotResult',e.message,true)}}
+$('plotDraw').onclick=()=>{plotPointX=null;plotCustom()};
+$('plotEvaluate').onclick=evaluatePlotPoint;
+$('plotPreset').onchange=()=>{$('plotExpr').value=$('plotPreset').value;plotPointX=null;plotCustom()};
+$('plotExpr').addEventListener('change',()=>{plotPointX=null;plotCustom()});
+$('plotRange').addEventListener('change',()=>{let r=number('plotRange');if(r<2||r>50){msg('plotResult','Graph range must be between 2 and 50.',true);return}views.plotGraph={scale:r,cx:0,cy:0};plotPointX=null;plotCustom()});
+
+/* Simple rotatable 3D surface */
+const canvas=$('threeCanvas'),ctx=canvas.getContext('2d');let rx=-.65,ry=.7,z3=1,drag3=false,lx=0,ly=0;
+function surface(x,y){let t=$('surfaceType').value;if(t==='saddle')return .35*(x*x-y*y);if(t==='wave')return Math.sin(Math.hypot(x,y));if(t==='plane')return .6*(x+y);return .25*(x*x+y*y)}
+function project(x,y,z){let cy=Math.cos(ry),sy=Math.sin(ry),cx=Math.cos(rx),sx=Math.sin(rx),xx=x*cy-z*sy,zz=x*sy+z*cy,yy=y*cx-zz*sx,depth=y*sx+zz*cx;return{x:450+xx*82*z3,y:275-yy*82*z3,depth}}
+function draw3D(){ctx.clearRect(0,0,900,550);ctx.fillStyle='#f8faff';ctx.fillRect(0,0,900,550);let N=Math.max(12,Math.min(42,Number($('surfaceDetail')?.value||30))),cells=[];for(let i=0;i<N;i++)for(let j=0;j<N;j++){let x=-3+i*6/N,X=x+6/N,y=-3+j*6/N,Y=y+6/N,pts=[[x,y],[X,y],[X,Y],[x,Y]].map(([a,b])=>project(a,b,surface(a,b)));cells.push({pts,depth:pts.reduce((s,p)=>s+p.depth,0)/4})}cells.sort((a,b)=>a.depth-b.depth);cells.forEach(c=>{ctx.beginPath();ctx.moveTo(c.pts[0].x,c.pts[0].y);c.pts.slice(1).forEach(p=>ctx.lineTo(p.x,p.y));ctx.closePath();ctx.fillStyle='#79a9db';ctx.fill();ctx.strokeStyle='rgba(255,255,255,.5)';ctx.stroke()});[['X',[-3,0,0],[3,0,0]],['Y',[0,-3,0],[0,3,0]],['Z',[0,0,-3],[0,0,3]]].forEach(([l,a,b])=>{let p=project(...a),q=project(...b);ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.strokeStyle='#334155';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#17233d';ctx.fillText(l,q.x+5,q.y+5)})}
+$('surfaceType').onchange=draw3D;$('surfaceDetail').onchange=draw3D;$('reset3D').onclick=()=>{rx=-.65;ry=.7;z3=1;draw3D()};$('zoom3DIn').onclick=()=>{z3=Math.min(3,z3*1.15);draw3D()};$('zoom3DOut').onclick=()=>{z3=Math.max(.4,z3/1.15);draw3D()};
+canvas.onpointerdown=e=>{drag3=true;lx=e.clientX;ly=e.clientY;canvas.setPointerCapture(e.pointerId)};canvas.onpointermove=e=>{if(!drag3)return;ry+=(e.clientX-lx)*.009;rx+=(e.clientY-ly)*.009;lx=e.clientX;ly=e.clientY;draw3D()};canvas.onpointerup=canvas.onpointercancel=()=>drag3=false;canvas.addEventListener('wheel',e=>{e.preventDefault();z3=Math.max(.4,Math.min(3,z3*(e.deltaY<0?1.1:.9)));draw3D()},{passive:false});
+
+
+/* Initialize */
+['functionGraph','coordinateGraph','unitCircle','algebraGraph','calcGraph','plotGraph'].forEach(enableZoom);
+makeExpressionRows();plotFunctions();coordinate();trig();solveAlgebra();drawCalculus();plotCustom();draw3D();
+</script>
+</body></html>
